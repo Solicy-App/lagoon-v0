@@ -29,8 +29,8 @@ contract DeployVault2_USDT is Script {
 
     // ==================== VAULT 2 PARAMETERS ====================
 
-    // Admin address (controls all roles initially)
-    address constant ADMIN = 0xe5BefEB20b7Cd906a833B2265DCf22f495E29214;
+    // Safe wallet address (curator - receives deposited funds)
+    address constant SAFE = 0xFc3c513cE3aD237939085ede9097a3D2141eBAF9;
 
     // Vault token details
     string constant VAULT_NAME = "BUNN-USDT";
@@ -47,7 +47,7 @@ contract DeployVault2_USDT is Script {
     // ==================== PROTOCOL PARAMETERS ====================
 
     // Protocol fee receiver
-    address constant PROTOCOL_FEE_RECEIVER = ADMIN;
+    address constant PROTOCOL_FEE_RECEIVER = SAFE;
 
     // Default protocol rates (can be 0 for testing)
     uint16 constant PROTOCOL_MANAGEMENT_RATE = 0;
@@ -63,7 +63,7 @@ contract DeployVault2_USDT is Script {
         console.log("Deployer:", deployer);
         console.log("Chain ID:", block.chainid);
         console.log("USDT:", USDT);
-        console.log("Admin:", ADMIN);
+        console.log("Safe (Curator):", SAFE);
         console.log("");
 
         vm.startBroadcast(deployerPrivateKey);
@@ -105,15 +105,16 @@ contract DeployVault2_USDT is Script {
         console.log("Step 4: Creating BUNN Vault 2 Proxy (USDT)...");
 
         // Prepare initialization struct
+        // Using SAFE for all roles so Safe wallet has full control
         InitStruct memory initStruct = InitStruct({
             underlying: USDT, // Use USDT address
             name: VAULT_NAME,
             symbol: VAULT_SYMBOL,
-            safe: ADMIN, // Gnosis Safe (or admin for testing)
-            whitelistManager: ADMIN,
-            valuationManager: ADMIN,
-            admin: ADMIN,
-            feeReceiver: ADMIN,
+            safe: SAFE, // Gnosis Safe (receives deposited USDT)
+            whitelistManager: SAFE,
+            valuationManager: SAFE,
+            admin: SAFE,
+            feeReceiver: SAFE,
             managementRate: MANAGEMENT_RATE,
             performanceRate: PERFORMANCE_RATE,
             enableWhitelist: ENABLE_WHITELIST,
@@ -147,7 +148,7 @@ contract DeployVault2_USDT is Script {
         console.log("Name:", VAULT_NAME);
         console.log("Symbol:", VAULT_SYMBOL);
         console.log("Underlying:", USDT);
-        console.log("Admin:", ADMIN);
+        console.log("Safe (Curator):", SAFE);
         console.log("Management Fee: 0%");
         console.log("Performance Fee: 0%");
         console.log("Whitelist: Disabled");
