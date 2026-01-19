@@ -3,7 +3,10 @@ pragma solidity 0.8.26;
 
 import "forge-std/Script.sol";
 import {Vault} from "../src/v0.5.0/Vault.sol";
-import {BeaconProxyFactory, InitStruct} from "../src/protocol-v1/BeaconProxyFactory.sol";
+import {
+    BeaconProxyFactory,
+    InitStruct
+} from "../src/protocol-v1/BeaconProxyFactory.sol";
 import {FeeRegistry} from "../src/protocol-v1/FeeRegistry.sol";
 
 /**
@@ -27,15 +30,15 @@ contract DeployVault1_USDC is Script {
 
     // ==================== BUNN VAULT PARAMETERS ====================
 
-    // Admin address (controls all roles initially)
-    address constant ADMIN = 0xe5BefEB20b7Cd906a833B2265DCf22f495E29214;
+    // Safe wallet address (curator - receives deposited funds)
+    address constant SAFE = 0xFc3c513cE3aD237939085ede9097a3D2141eBAF9;
 
     // Vault token details
     string constant VAULT_NAME = "Vault Shares USDC";
     string constant VAULT_SYMBOL = "vsUSDC";
 
     // Fee parameters (0% for both)
-    uint16 constant MANAGEMENT_RATE = 0;  // 0 bps = 0%
+    uint16 constant MANAGEMENT_RATE = 0; // 0 bps = 0%
     uint16 constant PERFORMANCE_RATE = 0; // 0 bps = 0%
     uint256 constant RATE_UPDATE_COOLDOWN = 1 days;
 
@@ -45,7 +48,7 @@ contract DeployVault1_USDC is Script {
     // ==================== PROTOCOL PARAMETERS ====================
 
     // Protocol fee receiver
-    address constant PROTOCOL_FEE_RECEIVER = ADMIN;
+    address constant PROTOCOL_FEE_RECEIVER = SAFE;
 
     // Default protocol rates (can be 0 for testing)
     uint16 constant PROTOCOL_MANAGEMENT_RATE = 0;
@@ -61,7 +64,7 @@ contract DeployVault1_USDC is Script {
         console.log("Deployer:", deployer);
         console.log("Chain ID:", block.chainid);
         console.log("USDC:", USDC);
-        console.log("Admin:", ADMIN);
+        console.log("Safe (Curator):", SAFE);
         console.log("");
 
         vm.startBroadcast(deployerPrivateKey);
@@ -103,15 +106,16 @@ contract DeployVault1_USDC is Script {
         console.log("Step 4: Creating BUNN Vault Proxy...");
 
         // Prepare initialization struct
+        // Using SAFE for all roles so Safe wallet has full control
         InitStruct memory initStruct = InitStruct({
-            underlying: USDC,  // Use address directly, not IERC20
+            underlying: USDC, // Use address directly, not IERC20
             name: VAULT_NAME,
             symbol: VAULT_SYMBOL,
-            safe: ADMIN,                    // Gnosis Safe (or admin for testing)
-            whitelistManager: ADMIN,
-            valuationManager: ADMIN,
-            admin: ADMIN,
-            feeReceiver: ADMIN,
+            safe: SAFE, // Gnosis Safe (receives deposited USDC)
+            whitelistManager: SAFE,
+            valuationManager: SAFE,
+            admin: SAFE,
+            feeReceiver: SAFE,
             managementRate: MANAGEMENT_RATE,
             performanceRate: PERFORMANCE_RATE,
             enableWhitelist: ENABLE_WHITELIST,
@@ -119,12 +123,9 @@ contract DeployVault1_USDC is Script {
         });
 
         // Create vault proxy with salt for deterministic address
-        bytes32 salt = keccak256("BUNN_VAULT_V1");
+        bytes32 salt = keccak256("BUNN_VAULT_V2_SAFE_ADMIN");
 
-        address vaultProxy = factory.createVaultProxy(
-            initStruct,
-            salt
-        );
+        address vaultProxy = factory.createVaultProxy(initStruct, salt);
 
         console.log("BUNN Vault Proxy:", vaultProxy);
         console.log("");
@@ -148,7 +149,7 @@ contract DeployVault1_USDC is Script {
         console.log("Name:", VAULT_NAME);
         console.log("Symbol:", VAULT_SYMBOL);
         console.log("Underlying:", USDC);
-        console.log("Admin:", ADMIN);
+        console.log("Safe (Curator):", SAFE);
         console.log("Management Fee: 0%");
         console.log("Performance Fee: 0%");
         console.log("Whitelist: Disabled");
